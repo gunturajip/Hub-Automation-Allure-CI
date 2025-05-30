@@ -32,3 +32,6 @@ We suggest that you begin by typing:
   - .\tests\example.spec.js - Example end-to-end test
   - .\tests-examples\demo-todo-app.spec.js - Demo Todo App end-to-end tests
   - .\playwright.config.js - Playwright Test configuration
+
+## TO-DO:
+  - make scheduler for github actions every thursday in every week
