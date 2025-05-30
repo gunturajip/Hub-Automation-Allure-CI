@@ -1,9 +1,20 @@
 name: Playwright Tests
+
 on:
-  push:
-    branches: [master]
-  pull_request:
-    branches: [master]
+  schedule:
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+    inputs:
+      test_command:
+        description: "Custom test command"
+        required: true
+        default: '--grep-invert "@devRun"'
+        type: string
+      parallelism:
+        description: "Number of machines to split tests"
+        required: false
+        default: 2
+        type: number
 
 permissions:
   contents: write
@@ -31,22 +42,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          run_install: false
-
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: lts/*
-          cache: "pnpm"
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: npm ci
+
+      - name: Install Playwright Browser
+        run: npx playwright install
 
       - name: Run Playwright tests
-        run: xvfb-run pnpm exec playwright test ${{ github.event.inputs.test_command || '--grep-invert "@devRun"' }} --shard=${{ matrix.group }}/${{ github.event.inputs.parallelism || 2 }}
+        run: npm test --shard=${{ matrix.group }}/${{ github.event.inputs.parallelism || 2 }}
 
       - name: Upload test results and artifacts
         if: always()
