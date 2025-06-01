@@ -15,45 +15,10 @@ on:
         required: false
         default: 2
         type: number
-      github-token:
-        description: "GitHub token for publishing to GitHub Pages"
-        required: true
-      results-pattern:
-        description: "Pattern to match when downloading Allure results artifacts"
-        required: false
-        default: "allure-results-*"
-      results-directory:
-        description: "Directory where combined Allure results will be stored"
-        required: false
-        default: "combined-allure-results"
-      report-directory:
-        description: "Directory where the Allure report will be generated"
-        required: false
-        default: "allure-report"
-      history-directory:
-        description: "Directory for Allure history"
-        required: false
-        default: "allure-history"
-      gh-pages:
-        description: "Directory for GitHub Pages"
-        required: false
-        default: "gh-pages"
-      gh-pages-branch:
-        description: "Branch for GitHub Pages"
-        required: false
-        default: "gh-pages"
-      retention-days:
-        description: "Number of days to retain the Allure report artifact"
-        required: false
-        default: "14"
       publish-to-pages:
         description: "Whether to publish the report to GitHub Pages"
         required: false
         default: "true"
-      fail-on-empty-results:
-        description: "Whether to fail if no Allure results are found"
-        required: false
-        default: "false"
       add-env:
         description: "Whether to collect and add to report the env variables"
         required: false
@@ -137,16 +102,15 @@ jobs:
           find all-test-results -type f \( -name "*.webm" -o -name "*.mp4" \) -exec cp {} combined-allure-results/attachments \;
 
       - name: Load test report history
-        if: inputs.publish-to-pages == 'true'
         uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.gh-pages-branch }}
-          path: ${{ inputs.gh-pages }}
+          ref: gh-pages
+          path: gh-pages
         continue-on-error: true
 
       - name: Link Git Information And Browser Version To Allure Report
         shell: bash
-        working-directory: ${{ inputs.results-directory }}
+        working-directory: combined-allure-results
         if: inputs.add-env == 'true'
         run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
@@ -164,10 +128,10 @@ jobs:
       - name: Generate Allure Report
         uses: simple-elf/allure-report-action@v1.11
         with:
-          gh_pages: ${{ inputs.gh-pages }}
-          allure_results: ${{ inputs.results-directory }}
-          allure_history: ${{ inputs.history-directory }}
-          allure_report: ${{ inputs.report-directory }}
+          gh_pages: gh-pages
+          allure_results: combined-allure-results
+          allure_history: allure-history
+          allure_report: allure-report
 
       - name: Configure Allure for video attachments
         run: |
@@ -184,9 +148,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: allure-report
-          path: ${{ inputs.report-directory }}
+          path: allure-report
           if-no-files-found: warn
-          retention-days: ${{ inputs.retention-days }}
+          retention-days: 14
 
       - name: Queue deployment
         uses: softprops/turnstyle@v2
@@ -194,12 +158,12 @@ jobs:
           poll-interval-seconds: 20
           timeout-seconds: 1200
         env:
-          github_token: ${{ inputs.github-token }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Deploy report to GitHub Pages
         if: inputs.publish-to-pages == 'true'
         uses: peaceiris/actions-gh-pages@v4
         with:
-          github_token: ${{ inputs.github-token }}
-          publish_branch: ${{ inputs.gh-pages-branch }}
-          publish_dir: ${{ inputs.history-directory }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: allure-history
