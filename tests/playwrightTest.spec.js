@@ -8,14 +8,12 @@ const fs = require('fs');
 const path = require('path');
 
 test.afterEach(async ({ }, testInfo) => {
-    if (testInfo.status !== testInfo.expectedStatus) {
-        const videoPath = testInfo.attachments.find(a => a.name === 'video')?.path;
-        if (videoPath) {
-            await testInfo.attach('video', {
-                path: videoPath,
-                contentType: 'video/mp4'
-            });
-        }
+    const videoPath = testInfo.attachments.find(a => a.name === 'video')?.path;
+    if (videoPath) {
+        await testInfo.attach('video', {
+            path: videoPath,
+            contentType: 'video/webm'
+        });
     }
 });
 

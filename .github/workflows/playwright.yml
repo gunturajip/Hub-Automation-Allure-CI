@@ -97,15 +97,6 @@ jobs:
             cp "$video" "combined-allure-results/attachments/${test_name}-video.webm"
           done
 
-          # Show all Video attachments:
-          echo "Video attachments:"
-          ls combined-allure-results/attachments
-          # Verify files were copied correctly
-          echo "Allure results files:"
-          find combined-allure-results -type f -name "*.json" | wc -l
-          echo "Video attachments:"
-          find combined-allure-results/attachments -type f | wc -l
-
       - name: Load test report history
         uses: actions/checkout@v4
         with:
@@ -157,7 +148,7 @@ jobs:
           name: allure-report
           path: allure-report
           if-no-files-found: warn
-          retention-days: 14
+          retention-days: 7
 
       - name: Queue deployment
         uses: softprops/turnstyle@v2
