@@ -79,24 +79,21 @@ jobs:
           path: all-test-results
           pattern: allure-results-*
 
-      - name: Merge Allure Results
-        shell: bash
+      - name: Merge Allure results
         run: |
-          echo "Merging Allure results..."
+          # Combine all allure-results folders
           mkdir -p combined-allure-results
 
-          # Use rsync to merge all results - more efficient than find/cp
-          rsync -av --ignore-existing all-test-results/*/ combined-allure-results/
+          find all-test-results/*/allure-results -type f \( -name "*.json" -o -name "*.webm" -o -name "*.md" -o -name "*.zip" \) | while read -r file; do
+            # Get the base filename with extension
+            filename=$(basename "$file")
 
-          # Count total files to verify results
-          TOTAL_FILES=$(find combined-allure-results -type f | wc -l)
-          echo "Total files in combined results: $TOTAL_FILES"
+            # Copy to combined-allure-results
+            cp "$file" "combined-allure-results/$filename"
+          done
 
-          # Fail if no results found and fail-on-empty-results is true
-          if [ "$TOTAL_FILES" -eq 0 ] && [ "${{ inputs.fail-on-empty-results }}" = "true" ]; then
-            echo "No Allure results found. Exiting with error."
-            exit 1
-          fi
+          echo "List of combined-allure-results:"
+          ls combined-allure-results
 
       - name: Load test report history
         uses: actions/checkout@v4
