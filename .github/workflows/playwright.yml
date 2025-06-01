@@ -15,14 +15,6 @@ on:
         required: false
         default: 2
         type: number
-      publish-to-pages:
-        description: "Whether to publish the report to GitHub Pages"
-        required: false
-        default: "true"
-      add-env:
-        description: "Whether to collect and add to report the env variables"
-        required: false
-        default: "true"
 
 permissions:
   contents: write
@@ -111,7 +103,6 @@ jobs:
       - name: Link Git Information And Browser Version To Allure Report
         shell: bash
         working-directory: combined-allure-results
-        if: inputs.add-env == 'true'
         run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           {
@@ -161,7 +152,6 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Deploy report to GitHub Pages
-        if: inputs.publish-to-pages == 'true'
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
