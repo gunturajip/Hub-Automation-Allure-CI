@@ -79,20 +79,24 @@ jobs:
           path: all-test-results
           pattern: allure-results-*
 
-      - name: Merge Allure results
+      - name: Merge Allure Results
+        shell: bash
         run: |
-          # Combine all allure-results folders
+          echo "Merging Allure results..."
           mkdir -p combined-allure-results
-          find all-test-results -type f -name "*.json" -exec cp {} combined-allure-results \;
 
-          # Copy test videos to Allure attachments directory
-          mkdir -p combined-allure-results/attachments
-          find all-test-results/*/allure-results -type f \( -name "*.webm" -o -name "*.mp4" \) | while read -r video; do
-            # Extract test name from video filename
-            test_name=$(basename "$video" | sed 's/\.[^.]*$//')
-            # Copy to attachments with consistent naming
-            cp "$video" "combined-allure-results/attachments/${test_name}.webm"
-          done
+          # Use rsync to merge all results - more efficient than find/cp
+          rsync -av --ignore-existing all-test-results/*/ combined-allure-results/
+
+          # Count total files to verify results
+          TOTAL_FILES=$(find combined-allure-results -type f | wc -l)
+          echo "Total files in combined results: $TOTAL_FILES"
+
+          # Fail if no results found and fail-on-empty-results is true
+          if [ "$TOTAL_FILES" -eq 0 ] && [ "${{ inputs.fail-on-empty-results }}" = "true" ]; then
+            echo "No Allure results found. Exiting with error."
+            exit 1
+          fi
 
       - name: Load test report history
         uses: actions/checkout@v4
@@ -124,15 +128,6 @@ jobs:
           allure_results: combined-allure-results
           allure_history: allure-history
           allure_report: allure-report
-
-      - name: Manually include video attachments into allure-report
-        run: |
-          # Change ownership of the allure-report directory
-          sudo chown -R runner:runner allure-report
-
-          # Then manually copy the videos to the report's attachment directory
-          mkdir -p allure-report/data/attachments
-          cp combined-allure-results/attachments/* allure-report/data/attachments/
 
       - name: Upload Allure report as artifact
         uses: actions/upload-artifact@v4
