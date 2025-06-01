@@ -88,8 +88,10 @@ jobs:
           # Copy test videos to Allure attachments directory
           mkdir -p combined-allure-results/attachments
           find all-test-results -type f \( -name "*.webm" -o -name "*.mp4" \) | while read -r video; do
+            echo "Video name: $video"
             # Extract test name from video filename
             test_name=$(basename "$video" | sed 's/\.[^.]*$//')
+            echo "Test video name: $test_name"
             # Copy to attachments with consistent naming
             cp "$video" "combined-allure-results/attachments/${test_name}.webm"
           done
