@@ -4,18 +4,6 @@ const { HomePage } = require('./pages/home.page')
 const { ReimbursementPage } = require('./pages/expense-claim/reimbursement.page')
 const { NavigationPage } = require('./pages/navigation.page')
 const { faker } = require('@faker-js/faker');
-const fs = require('fs');
-const path = require('path');
-
-test.afterEach(async ({ }, testInfo) => {
-    const videoPath = testInfo.attachments.find(a => a.name === 'video')?.path;
-    if (videoPath) {
-        await testInfo.attach('video', {
-            path: videoPath,
-            contentType: 'video/webm'
-        });
-    }
-});
 
 test.describe("Project Reimbursement Request for Indonesia Office Approved by the PO", () => {
     let loginPage, homePage, reimbursementPage, navigationPage, codeOfReimbursementReq, reimbursementReqNotes, reimbursementReceipt, financeVerificationNote, reimbursementDescription, reimbursementFile;
