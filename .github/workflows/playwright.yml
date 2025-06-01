@@ -22,7 +22,7 @@ on:
       add-env:
         description: "Whether to collect and add to report the env variables"
         required: false
-        default: "false"
+        default: "true"
 
 permissions:
   contents: write
