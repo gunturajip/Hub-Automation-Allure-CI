@@ -97,6 +97,23 @@ jobs:
             cp "$video" "combined-allure-results/attachments/${test_name}-video.webm"
           done
 
+          echo "Isi allure.properties:"
+          cat combined-allure-results/allure.properties
+
+      - name: Configure Allure for video attachments
+        run: |
+          cat > combined-allure-results/allure.properties <<EOF
+          allure.attachments.encoding=UTF-8
+          allure.attachments.mp4=video/mp4
+          allure.attachments.webm=video/webm
+          allure.attachments.retry=true
+          allure.link.issue.pattern=https://your-issue-tracker/{}
+          allure.link.tms.pattern=https://your-tms/{}
+          # Add video pattern matching
+          allure.attachments.testvideo.pattern=.*-video\.webm
+          allure.attachments.testvideo.type=video/webm
+          EOF
+
       - name: Load test report history
         uses: actions/checkout@v4
         with:
@@ -127,20 +144,6 @@ jobs:
           allure_results: combined-allure-results
           allure_history: allure-history
           allure_report: allure-report
-
-      - name: Configure Allure for video attachments
-        run: |
-          cat > combined-allure-results/allure.properties <<EOF
-          allure.attachments.encoding=UTF-8
-          allure.attachments.mp4=video/mp4
-          allure.attachments.webm=video/webm
-          allure.attachments.retry=true
-          allure.link.issue.pattern=https://your-issue-tracker/{}
-          allure.link.tms.pattern=https://your-tms/{}
-          # Add video pattern matching
-          allure.attachments.testvideo.pattern=.*-video\.webm
-          allure.attachments.testvideo.type=video/webm
-          EOF
 
       - name: Upload Allure report as artifact
         uses: actions/upload-artifact@v4
