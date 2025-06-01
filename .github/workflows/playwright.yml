@@ -91,7 +91,7 @@ jobs:
             # Extract test name from video filename
             test_name=$(basename "$video" | sed 's/\.[^.]*$//')
             # Copy to attachments with consistent naming
-            cp "$video" "combined-allure-results/attachments/${test_name}-video.webm"
+            cp "$video" "combined-allure-results/attachments/${test_name}.webm"
           done
 
           for file in combined-allure-results/*-result.json; do
