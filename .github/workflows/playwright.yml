@@ -1,8 +1,8 @@
 name: Playwright Tests
 
 on:
-  schedule:
-    - cron: "0 0 * * *"
+  push:
+    branches: [master]
   workflow_dispatch:
     inputs:
       test_command:
@@ -48,6 +48,9 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
 
+      - name: Install FFmpeg for Playwright test videos
+        run: apt-get install -y ffmpeg
+
       - name: Install dependencies
         run: npm ci
 
@@ -55,14 +58,19 @@ jobs:
         run: npx playwright install
 
       - name: Run Playwright tests
-        run: npm test --shard=${{ matrix.group }}/${{ github.event.inputs.parallelism || 2 }}
+        run: |
+          npm test --shard=${{ matrix.group }}/${{ github.event.inputs.parallelism || 2 }}
+          # Convert test videos to MP4 for better compatibility
+          find test-results -name "*.webm" -exec bash -c 'ffmpeg -i "$0" -c:v libx264 -preset fast -crf 22 -c:a aac "${0%.webm}.mp4"' {} \;
 
       - name: Upload test results and artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: allure-results-${{ matrix.group }}
-          path: allure-results
+          path: |
+            allure-results
+            test-results
           retention-days: 7
 
   merge-reports:
@@ -70,8 +78,35 @@ jobs:
     if: always()
     runs-on: ubuntu-latest
     steps:
-      - name: Merge and Publish Allure Report
-        uses: Valiantsin2021/allure-shard-results-publish@1.0.6
+      - name: Download all test artifacts
+        uses: actions/download-artifact@v4
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          add-env: "true"
+          path: all-test-results
+
+      - name: Merge Allure results
+        run: |
+          # Combine all allure-results folders
+          mkdir -p combined-allure-results
+          find all-test-results -type f -name "*.json" -exec cp {} combined-allure-results \;
+
+          # Copy test videos to Allure attachments directory
+          mkdir -p combined-allure-results/attachments
+          find all-test-results -type f \( -name "*.webm" -o -name "*.mp4" \) -exec cp {} combined-allure-results/attachments \;
+
+      - name: Generate Allure report
+        uses: simple-elf/allure-report-action@v2
+        with:
+          allure-results: combined-allure-results
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          keep-history: true
+
+      - name: Configure Allure for video attachments
+        run: |
+          cat > allure.properties <<EOF
+          allure.attachments.encoding=UTF-8
+          allure.attachments.mp4=video/mp4
+          allure.attachments.webm=video/webm
+          allure.attachments.retry=true
+          allure.link.issue.pattern=https://your-issue-tracker/{}
+          allure.link.tms.pattern=https://your-tms/{}
+          EOF
