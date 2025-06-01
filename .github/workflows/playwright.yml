@@ -133,6 +133,9 @@ jobs:
 
       - name: Manually include video attachments into allure-report
         run: |
+          # Change ownership of the allure-report directory
+          sudo chown -R runner:runner allure-report
+
           # Then manually copy the videos to the report's attachment directory
           mkdir -p allure-report/data/attachments
           cp combined-allure-results/attachments/* allure-report/data/attachments/
