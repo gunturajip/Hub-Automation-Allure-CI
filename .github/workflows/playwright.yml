@@ -63,6 +63,12 @@ jobs:
           # Convert test videos to MP4 for better compatibility
           find test-results -name "*.webm" -exec bash -c 'ffmpeg -i "$0" -c:v libx264 -preset fast -crf 22 -c:a aac "${0%.webm}.mp4"' {} \;
 
+          # Rename video files to match test names for Allure attachment
+          find test-results -name "*.mp4" | while read -r video; do
+            test_name=$(basename "$video" .mp4)
+            mv "$video" "allure-results/$test_name.mp4"
+          done
+
       - name: Upload test results and artifacts
         if: always()
         uses: actions/upload-artifact@v4
@@ -92,7 +98,18 @@ jobs:
 
           # Copy test videos to Allure attachments directory
           mkdir -p combined-allure-results/attachments
-          find all-test-results -type f \( -name "*.webm" -o -name "*.mp4" \) -exec cp {} combined-allure-results/attachments \;
+          find all-test-results -type f \( -name "*.webm" -o -name "*.mp4" \) | while read -r video; do
+            # Extract test name from video filename
+            test_name=$(basename "$video" | sed 's/\.[^.]*$//')
+            # Copy to attachments with consistent naming
+            cp "$video" "combined-allure-results/attachments/${test_name}-video.mp4"
+          done
+
+          # Verify files were copied correctly
+          echo "Allure results files:"
+          find combined-allure-results -type f -name "*.json" | wc -l
+          echo "Video attachments:"
+          find combined-allure-results/attachments -type f | wc -l
 
       - name: Load test report history
         uses: actions/checkout@v4
@@ -127,13 +144,16 @@ jobs:
 
       - name: Configure Allure for video attachments
         run: |
-          cat > allure.properties <<EOF
+          cat > combined-allure-results/allure.properties <<EOF
           allure.attachments.encoding=UTF-8
           allure.attachments.mp4=video/mp4
           allure.attachments.webm=video/webm
           allure.attachments.retry=true
           allure.link.issue.pattern=https://your-issue-tracker/{}
           allure.link.tms.pattern=https://your-tms/{}
+          # Add video pattern matching
+          allure.attachments.testvideo.pattern=.*-video\.mp4
+          allure.attachments.testvideo.type=video/mp4
           EOF
 
       - name: Upload Allure report as artifact
@@ -158,3 +178,4 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
           publish_dir: allure-history
+          keep_files: true
