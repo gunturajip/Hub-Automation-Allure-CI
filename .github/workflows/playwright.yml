@@ -60,13 +60,18 @@ jobs:
       - name: Run Playwright tests
         run: |
           CI=true npm test --shard=${{ matrix.group }}/${{ github.event.inputs.parallelism || 2 }}
+
+      - name: Modify test video from WEBM to MP4
+        run: |
           # Convert test videos to MP4 for better compatibility
           find test-results -name "*.webm" -exec bash -c 'ffmpeg -i "$0" -c:v libx264 -preset fast -crf 22 -c:a aac "${0%.webm}.mp4"' {} \;
 
           # Rename video files to match test names for Allure attachment
           find test-results -name "*.mp4" | while read -r video; do
-            test_name=$(basename "$video" .mp4)
-            mv "$video" "allure-results/$test_name.mp4"
+            test_name_mp4=$(basename "$video" .mp4)
+            mv "$video" "allure-results/$test_name_mp4.mp4"
+            test_name_webm=$(basename "$video" .webm)
+            mv "$video" "allure-results/$test_name_webm.webm"
           done
 
       - name: Upload test results and artifacts
@@ -103,6 +108,7 @@ jobs:
             test_name=$(basename "$video" | sed 's/\.[^.]*$//')
             # Copy to attachments with consistent naming
             cp "$video" "combined-allure-results/attachments/${test_name}-video.mp4"
+            cp "$video" "combined-allure-results/attachments/${test_name}-video.webm"
           done
 
           # Verify files were copied correctly
