@@ -59,7 +59,7 @@ jobs:
 
       - name: Run Playwright tests
         run: |
-          npm test --shard=${{ matrix.group }}/${{ github.event.inputs.parallelism || 2 }}
+          CI=true npm test --shard=${{ matrix.group }}/${{ github.event.inputs.parallelism || 2 }}
           # Convert test videos to MP4 for better compatibility
           find test-results -name "*.webm" -exec bash -c 'ffmpeg -i "$0" -c:v libx264 -preset fast -crf 22 -c:a aac "${0%.webm}.mp4"' {} \;
 

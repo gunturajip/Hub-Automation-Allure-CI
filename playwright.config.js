@@ -45,7 +45,7 @@ export default defineConfig({
         dir: './test-results/videos/'
       }
     },
-    headless: false,
+    headless: process.env.CI ? true : false,
     video: 'on',
   },
 
