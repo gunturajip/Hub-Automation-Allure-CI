@@ -82,6 +82,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: all-test-results
+          pattern: allure-results-*
 
       - name: Merge Allure results
         run: |
