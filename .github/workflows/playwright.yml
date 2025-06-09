@@ -92,9 +92,6 @@ jobs:
             cp "$file" "combined-allure-results/$filename"
           done
 
-          echo "List of combined-allure-results:"
-          ls combined-allure-results
-
       - name: Load test report history
         uses: actions/checkout@v4
         with:
